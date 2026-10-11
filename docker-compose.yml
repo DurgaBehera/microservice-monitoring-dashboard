@@ -1,0 +1,84 @@
+x-service-healthcheck: &service-healthcheck
+  # python:3.11-slim has no curl/wget, so use Python's stdlib for the check
+  test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=3).status == 200 else 1)"]
+  interval: 15s
+  timeout: 5s
+  retries: 3
+  start_period: 10s
+
+services:
+  user-service:
+    build: ./services/user-service
+    container_name: user-service
+    ports:
+      - "${USER_SERVICE_PORT:-8001}:8000"
+    healthcheck: *service-healthcheck
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  order-service:
+    build: ./services/order-service
+    container_name: order-service
+    ports:
+      - "${ORDER_SERVICE_PORT:-8002}:8000"
+    healthcheck: *service-healthcheck
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  payment-service:
+    build: ./services/payment-service
+    container_name: payment-service
+    ports:
+      - "${PAYMENT_SERVICE_PORT:-8003}:8000"
+    healthcheck: *service-healthcheck
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - user-service
+      - order-service
+      - payment-service
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
