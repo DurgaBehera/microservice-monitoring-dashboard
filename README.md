@@ -56,7 +56,26 @@ Dummy IDs: users `1-4`, orders `101-104`, payments `5001-5004`.
 
 - Default login: **admin / admin** (set in `.env`). Grafana may ask you to change the password on first login; you can skip that locally.
 - A Prometheus datasource is **provisioned automatically** from `monitoring/grafana/provisioning/datasources/prometheus.yml`, pointing at `http://prometheus:9090`. You don't need to add it by hand.
-- To build a dashboard: **Dashboards → New → New dashboard → Add visualization**, pick the *Prometheus* datasource, and paste one of the queries below.
+- A ready-made **Microservices Overview** dashboard is provisioned automatically (see below). To build your own: **Dashboards → New → New dashboard → Add visualization**, pick the *Prometheus* datasource, and paste one of the queries below.
+
+### Microservices Overview dashboard
+
+Open it at **http://localhost:3000/d/microservices-overview** (or **Dashboards → Microservices → Microservices Overview**). It refreshes every 10 seconds and shows the last 15 minutes by default.
+
+| Panel | What it shows | Query (simplified) |
+|-------|---------------|--------------------|
+| **Service Status** | UP (green) / DOWN (red) for each service, based on whether Prometheus could scrape it | `up{job=~"user-service\|order-service\|payment-service"}` |
+| **Request Rate per Service** | Requests per second handled by each service | `sum by (service) (rate(http_requests_total[1m]))` |
+| **Error Rate (%)** | Percentage of requests that returned a 5xx status, per service. Shows 0% when there are no errors | 5xx rate / total rate × 100 |
+| **P95 Latency per Service** | 95th percentile response time per service | `histogram_quantile(0.95, sum by (service, le) (rate(http_request_duration_seconds_bucket[1m])))` |
+
+How it's loaded:
+
+- The dashboard JSON lives in `monitoring/grafana/dashboards/microservices-overview.json`.
+- `monitoring/grafana/provisioning/dashboards/dashboards.yml` tells Grafana to load every JSON file from `/etc/grafana/dashboards`, which `docker-compose.yml` mounts from `monitoring/grafana/dashboards/`.
+- Panels reference the provisioned Prometheus datasource by its fixed uid `prometheus`.
+- You can edit the dashboard in the UI, but to keep changes, export the JSON (**Share → Export**) and save it over the file in the repo. Grafana re-reads the folder every 30 seconds.
+- Panels only show data once there is traffic, so run the traffic loop below first.
 
 ## Metrics
 
@@ -122,9 +141,13 @@ microservice-monitoring-dashboard/
 │   ├── prometheus/
 │   │   └── prometheus.yml       # Scrape config for the 3 services (+ Prometheus itself)
 │   └── grafana/
+│       ├── dashboards/
+│       │   └── microservices-overview.json  # Provisioned dashboard: status, request rate, error %, P95 latency
 │       └── provisioning/
+│           ├── dashboards/
+│           │   └── dashboards.yml       # Tells Grafana to load dashboards from the mounted folder
 │           └── datasources/
-│               └── prometheus.yml   # Auto-adds Prometheus as Grafana's default datasource
+│               └── prometheus.yml       # Auto-adds Prometheus (uid: prometheus) as the default datasource
 ├── docker-compose.yml           # Runs the 3 services, Prometheus and Grafana on one network
 ├── .env                         # Local dev defaults: ports and Grafana login
 ├── README.md
