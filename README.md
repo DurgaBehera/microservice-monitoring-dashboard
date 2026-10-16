@@ -68,6 +68,10 @@ Open it at **http://localhost:3000/d/microservices-overview** (or **Dashboards â
 | **Request Rate per Service** | Requests per second handled by each service | `sum by (service) (rate(http_requests_total[1m]))` |
 | **Error Rate (%)** | Percentage of requests that returned a 5xx status, per service. Shows 0% when there are no errors | 5xx rate / total rate Ã— 100 |
 | **P95 Latency per Service** | 95th percentile response time per service | `histogram_quantile(0.95, sum by (service, le) (rate(http_request_duration_seconds_bucket[1m])))` |
+| **Average Response Time per Service** | Average response time in milliseconds for each service | `1000 * (sum by (service) (rate(http_request_duration_seconds_sum[1m])) / sum by (service) (rate(http_request_duration_seconds_count[1m])))` |
+| **P99 Latency per Service** | 99th percentile response time in milliseconds for each service | `1000 * histogram_quantile(0.99, sum by (service, le) (rate(http_request_duration_seconds_bucket[1m])))` |
+
+The latency metrics are recorded in seconds; the average and P99 panels multiply their PromQL results by 1000 and use Grafana's millisecond unit. These panels display **No data** until requests have been observed for a service.
 
 How it's loaded:
 
@@ -110,21 +114,46 @@ sum by (service) (rate(http_requests_total[5m]))
 # 95th percentile latency per service
 histogram_quantile(0.95, sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))
 
+# Average response time in milliseconds, per service
+1000 * (
+  sum by (service) (rate(http_request_duration_seconds_sum[1m]))
+  /
+  sum by (service) (rate(http_request_duration_seconds_count[1m]))
+)
+
+# 99th percentile latency in milliseconds, per service
+1000 * histogram_quantile(
+  0.99,
+  sum by (service, le) (rate(http_request_duration_seconds_bucket[1m]))
+)
+
 # Average latency per endpoint
 sum by (service, endpoint) (rate(http_request_duration_seconds_sum[5m]))
   /
 sum by (service, endpoint) (rate(http_request_duration_seconds_count[5m]))
 ```
 
-Tip: generate some traffic first so the graphs have data:
+### Test the latency panels locally
+
+Start the stack:
 
 ```bash
-for i in $(seq 1 50); do
-  curl -s localhost:8001/users > /dev/null
-  curl -s localhost:8002/orders/10$((i % 5)) > /dev/null
-  curl -s localhost:8003/payments > /dev/null
-done
+docker compose up -d
 ```
+
+In PowerShell, generate traffic for all three services:
+
+```powershell
+1..50 | ForEach-Object {
+  Invoke-RestMethod http://localhost:8001/users | Out-Null
+  Invoke-RestMethod http://localhost:8002/orders | Out-Null
+  Invoke-RestMethod http://localhost:8003/payments | Out-Null
+}
+```
+
+Confirm that each service exposes histogram samples by opening its `/metrics` endpoint, for example `http://localhost:8001/metrics`, and searching for `http_request_duration_seconds_sum`, `http_request_duration_seconds_count`, and `http_request_duration_seconds_bucket`. Prometheus scrapes every 15 seconds; check `http://localhost:9090/targets` for healthy targets, then query the average and P99 PromQL examples above at `http://localhost:9090/graph`.
+
+Open the dashboard at `http://localhost:3000/d/microservices-overview`. The new panels should show separate lines for `user-service`, `order-service`, and `payment-service` after traffic has been scraped. Grafana refreshes the provisioned dashboard files every 30 seconds. Also confirm Request Rate, Error Rate, and P95 still display data.
 
 ## Project structure
 
