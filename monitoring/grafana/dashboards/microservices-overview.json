@@ -297,6 +297,82 @@
           "range": true
         }
       ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Request Success Rate (%)",
+      "description": "Share of requests answered with a 2xx status, per service (1m window). Shows 0% if a service had traffic but no 2xx responses; shows no line for a service with no traffic in the window (instead of a misleading 0%).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "line+area"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 95
+              },
+              {
+                "color": "green",
+                "value": 99
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "mean"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "asc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * sum by (service) (rate(http_requests_total{status=~\"2..\"}[1m])) / (sum by (service) (rate(http_requests_total[1m])) > 0)\nor\n(sum by (service) (rate(http_requests_total[1m])) > 0) * 0",
+          "legendFormat": "{{service}}",
+          "range": true
+        }
+      ]
     }
   ]
 }

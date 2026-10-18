@@ -68,6 +68,7 @@ Open it at **http://localhost:3000/d/microservices-overview** (or **Dashboards �
 | **Request Rate per Service** | Requests per second handled by each service | `sum by (service) (rate(http_requests_total[1m]))` |
 | **Error Rate (%)** | Percentage of requests that returned a 5xx status, per service. Shows 0% when there are no errors | 5xx rate / total rate × 100 |
 | **P95 Latency per Service** | 95th percentile response time per service | `histogram_quantile(0.95, sum by (service, le) (rate(http_request_duration_seconds_bucket[1m])))` |
+| **Request Success Rate (%)** | Percentage of requests that returned a 2xx status, per service (red below 95%, yellow below 99%, green at 99% and above). 4xx and 5xx both count as unsuccessful. Services with no traffic in the last minute show no line | 2xx rate / total rate × 100 |
 
 How it's loaded:
 
@@ -98,6 +99,9 @@ up{job=~"user-service|order-service|payment-service"}
 
 # Requests per second, per service
 sum by (service) (rate(http_requests_total[1m]))
+
+# Success rate (%) per service: share of 2xx responses
+100 * sum by (service) (rate(http_requests_total{status=~"2.."}[1m])) / (sum by (service) (rate(http_requests_total[1m])) > 0)
 
 # Requests per second, per endpoint
 sum by (service, endpoint) (rate(http_requests_total[1m]))
