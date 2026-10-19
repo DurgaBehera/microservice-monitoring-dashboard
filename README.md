@@ -82,6 +82,24 @@ How it's loaded:
 - You can edit the dashboard in the UI, but to keep changes, export the JSON (**Share → Export**) and save it over the file in the repo. Grafana re-reads the folder every 30 seconds.
 - Panels only show data once there is traffic, so run the traffic loop below first.
 
+### Verifying Latency Panels
+
+Start the stack from the project directory:
+
+```bash
+docker compose up --build
+```
+
+Open Grafana at **http://localhost:3000** and generate requests using the service routes:
+
+```bash
+curl http://localhost:8001/users
+curl http://localhost:8002/orders/101
+curl http://localhost:8003/payments/5001
+```
+
+Allow Prometheus time to scrape the requests and populate the 1-minute rate windows, then select a dashboard time range that includes the generated traffic (for example, **Last 15 minutes**). Check target health at **http://localhost:9090/targets**. If the latency panels have no data, confirm the service targets are **UP** and check the services' `/metrics` output for `http_request_duration_seconds_bucket`, `http_request_duration_seconds_sum`, and `http_request_duration_seconds_count`.
+
 ## Metrics
 
 Every service records these metrics with an HTTP middleware:
