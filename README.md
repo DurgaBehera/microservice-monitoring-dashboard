@@ -68,7 +68,11 @@ Open it at **http://localhost:3000/d/microservices-overview** (or **Dashboards �
 | **Request Rate per Service** | Requests per second handled by each service | `sum by (service) (rate(http_requests_total[1m]))` |
 | **Error Rate (%)** | Percentage of requests that returned a 5xx status, per service. Shows 0% when there are no errors | 5xx rate / total rate × 100 |
 | **P95 Latency per Service** | 95th percentile response time per service | `histogram_quantile(0.95, sum by (service, le) (rate(http_request_duration_seconds_bucket[1m])))` |
+| **Average Response Time per Service** | Mean response time across requests per service, in milliseconds; use alongside P95/P99 to see whether tail latency is much higher than the average | `(sum by (service) (rate(http_request_duration_seconds_sum[1m])) / sum by (service) (rate(http_request_duration_seconds_count[1m]))) * 1000` |
+| **P99 Latency per Service** | 99th-percentile response time per service, in milliseconds; roughly 99% of requests complete at or below this value, highlighting slow-tail behavior | `histogram_quantile(0.99, sum by (service, le) (rate(http_request_duration_seconds_bucket[1m]))) * 1000` |
 | **Request Success Rate (%)** | Percentage of requests that returned a 2xx status, per service (red below 95%, yellow below 99%, green at 99% and above). 4xx and 5xx both count as unsuccessful. Services with no traffic in the last minute show no line | 2xx rate / total rate × 100 |
+
+Average response time is calculated from histogram `_sum` and `_count` rates. P99 is estimated from the histogram buckets, so its precision depends on the bucket boundaries configured by each service.
 
 How it's loaded:
 
@@ -77,6 +81,24 @@ How it's loaded:
 - Panels reference the provisioned Prometheus datasource by its fixed uid `prometheus`.
 - You can edit the dashboard in the UI, but to keep changes, export the JSON (**Share → Export**) and save it over the file in the repo. Grafana re-reads the folder every 30 seconds.
 - Panels only show data once there is traffic, so run the traffic loop below first.
+
+### Verifying Latency Panels
+
+Start the stack from the project directory:
+
+```bash
+docker compose up --build
+```
+
+Open Grafana at **http://localhost:3000** and generate requests using the service routes:
+
+```bash
+curl http://localhost:8001/users
+curl http://localhost:8002/orders/101
+curl http://localhost:8003/payments/5001
+```
+
+Allow Prometheus time to scrape the requests and populate the 1-minute rate windows, then select a dashboard time range that includes the generated traffic (for example, **Last 15 minutes**). Check target health at **http://localhost:9090/targets**. If the latency panels have no data, confirm the service targets are **UP** and check the services' `/metrics` output for `http_request_duration_seconds_bucket`, `http_request_duration_seconds_sum`, and `http_request_duration_seconds_count`.
 
 ## Metrics
 
@@ -113,6 +135,12 @@ sum by (service) (rate(http_requests_total[5m]))
 
 # 95th percentile latency per service
 histogram_quantile(0.95, sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))
+
+# Average response time in milliseconds, per service
+(sum by (service) (rate(http_request_duration_seconds_sum[1m])) / sum by (service) (rate(http_request_duration_seconds_count[1m]))) * 1000
+
+# 99th percentile latency in milliseconds, per service
+histogram_quantile(0.99, sum by (service, le) (rate(http_request_duration_seconds_bucket[1m]))) * 1000
 
 # Average latency per endpoint
 sum by (service, endpoint) (rate(http_request_duration_seconds_sum[5m]))
