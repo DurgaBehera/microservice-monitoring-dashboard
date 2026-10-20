@@ -4,6 +4,7 @@ import time
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from pydantic import BaseModel, Field
 
 SERVICE_NAME = "order-service"
 
@@ -24,6 +25,10 @@ REQUEST_LATENCY = Histogram(
     ["service", "method", "endpoint"],
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0),
 )
+
+
+# Business metric (feature #9)
+ORDERS_CREATED = Counter("orders_created_total", "Total number of orders created")
 
 
 @app.middleware("http")
@@ -79,6 +84,26 @@ def get_order(order_id: int):
         if item["id"] == order_id:
             return item
     raise HTTPException(status_code=404, detail="Order not found")
+
+
+class OrderCreate(BaseModel):
+    user_id: int
+    total: float = Field(gt=0)
+
+
+@app.post("/orders", status_code=201)
+def create_order(payload: OrderCreate):
+    order = {
+        "id": max(o["id"] for o in ORDERS) + 1,
+        "user_id": payload.user_id,
+        "items": [],
+        "total": payload.total,
+        "currency": "INR",
+        "status": "pending",
+    }
+    ORDERS.append(order)
+    ORDERS_CREATED.inc()
+    return order
 
 
 @app.get("/metrics")
