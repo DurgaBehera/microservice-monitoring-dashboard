@@ -1,0 +1,204 @@
+{
+  "uid": "response-time-histogram",
+  "title": "Response Time Histogram",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "bargauge",
+      "title": "Response Time Distribution (requests per bucket)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.005\"})",
+          "legendFormat": "0-5 ms",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.01\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.005\"})",
+          "legendFormat": "5-10 ms",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.025\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.01\"})",
+          "legendFormat": "10-25 ms",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.05\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.025\"})",
+          "legendFormat": "25-50 ms",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "E",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.1\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.05\"})",
+          "legendFormat": "50-100 ms",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "F",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.25\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.1\"})",
+          "legendFormat": "100-250 ms",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "G",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.5\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.25\"})",
+          "legendFormat": "250-500 ms",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "H",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"1.0\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.5\"})",
+          "legendFormat": "500-1000 ms",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "I",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"2.5\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"1.0\"})",
+          "legendFormat": "1000-2500 ms",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "J",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"5.0\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"2.5\"})",
+          "legendFormat": "2500-5000 ms",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "K",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(http_request_duration_seconds_count{endpoint!~\"/metrics|/health\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"5.0\"})",
+          "legendFormat": ">5000 ms",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "options": {
+        "orientation": "vertical",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "heatmap",
+      "title": "Response Time Heatmap",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "format": "heatmap",
+          "legendFormat": "{{le}}",
+          "expr": "sum by (le) (increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\"}[1m]))"
+        }
+      ],
+      "options": {
+        "calculate": false,
+        "yAxis": {
+          "unit": "s"
+        },
+        "cellGap": 1
+      }
+    }
+  ]
+}
