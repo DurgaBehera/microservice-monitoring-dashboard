@@ -12,6 +12,21 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
       "targets": [{ "refId": "A", "expr": "sum(orders_created_total)" }]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Load Test: Requests per Second by Status Code",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (status) (rate(http_requests_total{endpoint=\"/load-test\"}[1m]))",
+          "legendFormat": "{{status}}"
+        }
+      ]
     }
   ]
 }
