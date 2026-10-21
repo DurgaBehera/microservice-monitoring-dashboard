@@ -1,0 +1,17 @@
+{
+  "uid": "business-metrics",
+  "title": "Business Metrics & Load Test",
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Orders Created (since service start)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "sum(orders_created_total)" }]
+    }
+  ]
+}
