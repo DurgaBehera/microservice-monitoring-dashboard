@@ -1,12 +1,18 @@
 """Order Service - a simple FastAPI microservice instrumented with Prometheus metrics."""
 
 import asyncio
+import json
+import os
 import random
 import time
+import urllib.error
+import urllib.request
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 from pydantic import BaseModel, Field
+
+from .circuit_breaker import CircuitBreaker, CircuitOpenError, State
 
 SERVICE_NAME = "order-service"
 
@@ -31,6 +37,49 @@ REQUEST_LATENCY = Histogram(
 
 # Business metric (feature #9)
 ORDERS_CREATED = Counter("orders_created_total", "Total number of orders created")
+
+# ---------------------------------------------------------------------------
+# Circuit breaker for calls to payment-service (feature #17)
+# ---------------------------------------------------------------------------
+PAYMENT_TARGET = "payment-service"
+PAYMENT_SERVICE_URL = os.getenv("PAYMENT_SERVICE_URL", "http://payment-service:8000").rstrip("/")
+PAYMENT_TIMEOUT_SECONDS = float(os.getenv("PAYMENT_TIMEOUT_SECONDS", "2"))
+
+CB_STATE = Gauge(
+    "circuit_breaker_state",
+    "Circuit breaker state (0=closed, 1=open, 2=half_open)",
+    ["service", "target"],
+)
+CB_TRANSITIONS = Counter(
+    "circuit_breaker_transitions_total",
+    "Circuit breaker state transitions",
+    ["service", "target", "from_state", "to_state"],
+)
+CB_REJECTED = Counter(
+    "circuit_breaker_rejected_calls_total",
+    "Calls short-circuited because the breaker was open",
+    ["service", "target"],
+)
+
+
+def _on_state_change(old: State, new: State) -> None:
+    CB_STATE.labels(SERVICE_NAME, PAYMENT_TARGET).set(new.value)
+    CB_TRANSITIONS.labels(SERVICE_NAME, PAYMENT_TARGET, old.name.lower(), new.name.lower()).inc()
+
+
+payment_breaker = CircuitBreaker(
+    failure_threshold=int(os.getenv("CB_FAILURE_THRESHOLD", "5")),
+    recovery_timeout=float(os.getenv("CB_RECOVERY_TIMEOUT_SECONDS", "30")),
+    on_state_change=_on_state_change,
+    on_reject=lambda: CB_REJECTED.labels(SERVICE_NAME, PAYMENT_TARGET).inc(),
+)
+CB_STATE.labels(SERVICE_NAME, PAYMENT_TARGET).set(State.CLOSED.value)
+
+
+def call_payment_service() -> dict:
+    """Ask payment-service whether it can take payments (5xx / network errors count as failures)."""
+    with urllib.request.urlopen(f"{PAYMENT_SERVICE_URL}/health", timeout=PAYMENT_TIMEOUT_SECONDS) as resp:
+        return json.loads(resp.read() or b"{}")
 
 
 @app.middleware("http")
@@ -108,6 +157,26 @@ def create_order(payload: OrderCreate):
     return order
 
 
+@app.post("/orders/{order_id}/pay")
+def pay_order(order_id: int):
+    order = next((o for o in ORDERS if o["id"] == order_id), None)
+    if order is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    try:
+        payment_breaker.call(call_payment_service)
+    except CircuitOpenError:
+        raise HTTPException(status_code=503, detail="Payment service unavailable (circuit open)")
+    except (urllib.error.URLError, OSError, ValueError):
+        raise HTTPException(status_code=502, detail="Payment service call failed")
+    order["status"] = "paid"
+    return order
+
+
+@app.get("/circuit-breaker")
+def circuit_breaker_status():
+    return {"target": PAYMENT_TARGET, "state": payment_breaker.state.name.lower()}
+
+
 @app.get("/load-test")
 async def load_test(
     delay_ms: int = Query(0, ge=0, le=5000),
@@ -122,4 +191,5 @@ async def load_test(
 
 @app.get("/metrics")
 def metrics():
+    payment_breaker.state  # refresh OPEN -> HALF_OPEN so the gauge is current
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
