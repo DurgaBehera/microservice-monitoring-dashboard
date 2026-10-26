@@ -104,6 +104,14 @@ curl http://localhost:8003/payments/5001
 
 Allow Prometheus time to scrape the requests and populate the 1-minute rate windows, then select a dashboard time range that includes the generated traffic (for example, **Last 15 minutes**). Check target health at **http://localhost:9090/targets**. If the latency panels have no data, confirm the service targets are **UP** and check the services' `/metrics` output for `http_request_duration_seconds_bucket`, `http_request_duration_seconds_sum`, and `http_request_duration_seconds_count`.
 
+## Alerting
+
+Prometheus loads alert rules from `monitoring/prometheus/alerts.yml` (mounted at `/etc/prometheus/alerts.yml`) and sends firing alerts to Alertmanager.
+
+- `HighErrorRate`: fires when a service's 5xx rate stays above 5% (with more than 0.1 req/s) for 1 minute.
+
+Check that the rule is loaded at http://localhost:9090/rules. To validate the files without Docker: `promtool check rules monitoring/prometheus/alerts.yml`.
+
 ## Metrics
 
 Every service records these metrics with an HTTP middleware:
