@@ -30,7 +30,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.005\"})",
+          "expr": "sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.005\"}[$__range]))",
           "legendFormat": "0-5 ms",
           "instant": true,
           "range": false
@@ -41,7 +41,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.01\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.005\"})",
+          "expr": "sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.01\"}[$__range])) - sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.005\"}[$__range]))",
           "legendFormat": "5-10 ms",
           "instant": true,
           "range": false
@@ -52,7 +52,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.025\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.01\"})",
+          "expr": "sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.025\"}[$__range])) - sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.01\"}[$__range]))",
           "legendFormat": "10-25 ms",
           "instant": true,
           "range": false
@@ -63,7 +63,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.05\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.025\"})",
+          "expr": "sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.05\"}[$__range])) - sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.025\"}[$__range]))",
           "legendFormat": "25-50 ms",
           "instant": true,
           "range": false
@@ -74,7 +74,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.1\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.05\"})",
+          "expr": "sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.1\"}[$__range])) - sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.05\"}[$__range]))",
           "legendFormat": "50-100 ms",
           "instant": true,
           "range": false
@@ -85,7 +85,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.25\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.1\"})",
+          "expr": "sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.25\"}[$__range])) - sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.1\"}[$__range]))",
           "legendFormat": "100-250 ms",
           "instant": true,
           "range": false
@@ -96,7 +96,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.5\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.25\"})",
+          "expr": "sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.5\"}[$__range])) - sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.25\"}[$__range]))",
           "legendFormat": "250-500 ms",
           "instant": true,
           "range": false
@@ -107,7 +107,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"1.0\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.5\"})",
+          "expr": "sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"1.0\"}[$__range])) - sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"0.5\"}[$__range]))",
           "legendFormat": "500-1000 ms",
           "instant": true,
           "range": false
@@ -118,7 +118,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"2.5\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"1.0\"})",
+          "expr": "sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"2.5\"}[$__range])) - sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"1.0\"}[$__range]))",
           "legendFormat": "1000-2500 ms",
           "instant": true,
           "range": false
@@ -129,7 +129,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"5.0\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"2.5\"})",
+          "expr": "sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"5.0\"}[$__range])) - sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"2.5\"}[$__range]))",
           "legendFormat": "2500-5000 ms",
           "instant": true,
           "range": false
@@ -140,7 +140,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_request_duration_seconds_count{endpoint!~\"/metrics|/health\"}) - sum(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"5.0\"})",
+          "expr": "sum(increase(http_request_duration_seconds_count{endpoint!~\"/metrics|/health\"}[$__range])) - sum(increase(http_request_duration_seconds_bucket{endpoint!~\"/metrics|/health\", le=\"5.0\"}[$__range]))",
           "legendFormat": ">5000 ms",
           "instant": true,
           "range": false
