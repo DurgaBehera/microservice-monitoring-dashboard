@@ -1,6 +1,6 @@
 import json
 
-DS_UID = "prometheus"   # <-- must match the uid in prometheus.yml (Step 3)
+DS_UID = "prometheus"   # must match the uid in monitoring/grafana/provisioning/datasources/prometheus.yml (Grafana datasource provisioning)
 BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0]  # same as main.py
 
 M = "http_request_duration_seconds"
@@ -13,7 +13,7 @@ def selector(*parts):
 
 
 def inc(b):
-    return "sum(" + M + "_bucket" + selector(EXCLUDE, 'le="' + repr(float(b)) + '"') + ")"
+    return "sum(increase(" + M + "_bucket" + selector(EXCLUDE, 'le="' + repr(float(b)) + '"') + "[$__range]))"
 
 
 targets, prev = [], None
@@ -28,7 +28,7 @@ for i, b in enumerate(BUCKETS):
 
 targets.append({
     "refId": chr(65 + len(BUCKETS)), "datasource": DS,
-    "expr": "sum(" + M + "_count" + selector(EXCLUDE) + ") - " + inc(BUCKETS[-1]),
+    "expr": "sum(increase(" + M + "_count" + selector(EXCLUDE) + "[$__range])) - " + inc(BUCKETS[-1]),
     "legendFormat": f">{BUCKETS[-1] * 1000:g} ms", "instant": True, "range": False,
 })
 
