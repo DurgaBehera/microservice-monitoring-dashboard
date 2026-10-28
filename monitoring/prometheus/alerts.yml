@@ -28,3 +28,12 @@ groups:
         annotations:
           summary: "High error rate in {{ $labels.service }}"
           description: "5xx error rate exceeded 5%."
+
+      - alert: ServiceDown
+        expr: up{job=~".*-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} is down"
+          description: "Prometheus has not been able to scrape {{ $labels.job }} ({{ $labels.instance }}) for more than 1 minute."

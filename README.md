@@ -109,8 +109,19 @@ Allow Prometheus time to scrape the requests and populate the 1-minute rate wind
 Prometheus loads alert rules from `monitoring/prometheus/alerts.yml` (mounted at `/etc/prometheus/alerts.yml`) and sends firing alerts to Alertmanager.
 
 - `HighErrorRate`: fires when a service's 5xx rate stays above 5% (with more than 0.1 req/s) for 1 minute.
+- `ServiceDown`: fires (severity `critical`) when Prometheus cannot scrape a `*-service` target (`up == 0`) for 1 minute.
 
 Check that the rule is loaded at http://localhost:9090/rules. To validate the files without Docker: `promtool check rules monitoring/prometheus/alerts.yml`.
+
+## Service uptime
+
+The **Service Uptime** Grafana dashboard (uid `service-uptime`) shows how long each service has been running, using the `process_start_time_seconds` metric that prometheus-client exposes by default:
+
+- **Uptime**: `time() - process_start_time_seconds{job=~".*-service"}`
+- **Restarts in selected range**: `changes(process_start_time_seconds{job=~".*-service"}[$__range])`
+- **Uptime over time**: the uptime series, which drops back to zero on every restart.
+
+See [docs/service-uptime.md](docs/service-uptime.md) for how to trigger the `ServiceDown` alert.
 
 ## Metrics
 
