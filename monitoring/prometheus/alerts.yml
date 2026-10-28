@@ -29,6 +29,25 @@ groups:
           summary: "High error rate in {{ $labels.service }}"
           description: "5xx error rate exceeded 5%."
 
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (service, le) (
+              rate(http_request_duration_seconds_bucket{endpoint!~"/load-test|/health|/metrics"}[5m])
+            )
+          ) > 1
+          and
+          sum by (service) (
+            rate(http_requests_total{endpoint!~"/load-test|/health|/metrics"}[5m])
+          ) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response latency in {{ $labels.service }}"
+          description: "P95 response latency exceeded 1 second for 2 minutes with sufficient traffic."
+
       - alert: ServiceDown
         expr: up{job=~".*-service"} == 0
         for: 1m

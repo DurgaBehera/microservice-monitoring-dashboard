@@ -109,9 +109,12 @@ Allow Prometheus time to scrape the requests and populate the 1-minute rate wind
 Prometheus loads alert rules from `monitoring/prometheus/alerts.yml` (mounted at `/etc/prometheus/alerts.yml`) and sends firing alerts to Alertmanager.
 
 - `HighErrorRate`: fires when a service's 5xx rate stays above 5% (with more than 0.1 req/s) for 1 minute.
+- `HighLatency`: fires (severity `warning`) when a service's P95 response latency exceeds 1 second over a 5-minute rate window, with more than 0.1 non-probe requests per second, for 2 minutes. The 1-second threshold is in seconds to match the histogram's units; adjust the `> 1` comparison in `monitoring/prometheus/alerts.yml` to change it. Requests to `/load-test`, `/health`, and `/metrics` are excluded from both the latency calculation and traffic guard.
 - `ServiceDown`: fires (severity `critical`) when Prometheus cannot scrape a `*-service` target (`up == 0`) for 1 minute.
 
 Check that the rule is loaded at http://localhost:9090/rules. To validate the files without Docker: `promtool check rules monitoring/prometheus/alerts.yml`.
+
+To exercise the rule, generate sustained traffic to a normal service endpoint whose P95 exceeds 1 second. It must exceed the threshold over the 5-minute rate window and remain active for 2 minutes; ordinary fast demo endpoints may not cause it to fire. For a local-only verification, temporarily lower the `> 1` threshold below the observed P95, generate at least 0.1 requests per second to a normal endpoint for several minutes, then restore the threshold. Confirm the alert's pending/firing state at http://localhost:9090/alerts. The `/load-test` endpoint is intentionally excluded, so its simulated delay cannot trigger this operational alert.
 
 ## Service uptime
 
