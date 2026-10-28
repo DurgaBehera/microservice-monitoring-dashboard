@@ -5,19 +5,19 @@ groups:
         expr: |
           (
             sum by (service) (
-              rate(http_requests_total{status=~"5.."}[2m])
+              rate(http_requests_total{status=~"5..", endpoint!="/load-test"}[2m])
             )
             /
             clamp_min(
               sum by (service) (
-                rate(http_requests_total[2m])
+                rate(http_requests_total{endpoint!="/load-test"}[2m])
               ),
               0.000001
             )
           ) > 0.05
           and
           sum by (service) (
-            rate(http_requests_total[2m])
+            rate(http_requests_total{endpoint!="/load-test"}[2m])
           ) > 0.1
 
         for: 1m
